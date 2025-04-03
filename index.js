@@ -11,6 +11,12 @@ const allowedOrigins = [
   "https://maidapp-frontend-wmdu.vercel.app", // ✅ Ensure correct frontend URL
 ];
 
+// Debugging: Log incoming requests
+server.use((req, res, next) => {
+  console.log("Incoming request from:", req.headers.origin);
+  next();
+});
+
 server.use(
   cors({
     origin: function (origin, callback) {
@@ -21,14 +27,23 @@ server.use(
         callback(new Error("CORS policy does not allow this origin"), false);
       }
     },
-    methods: "GET, POST, PUT, DELETE, OPTIONS",
-    allowedHeaders: "Content-Type, Authorization",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-// ✅ Let cors handle preflight properly
-server.options("*", cors());
+// ✅ Manually handle preflight requests
+server.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Allow-Credentials", "true");
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 server.use(express.json());
 server.use(router);
