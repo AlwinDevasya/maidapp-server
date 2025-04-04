@@ -1,21 +1,26 @@
+// Import dotenv
 require("dotenv").config();
+
+// Import express
 const express = require("express");
+
+// Import cors
 const cors = require("cors");
+
+// Import router
 const router = require("./router");
+
+// Import connection
 require("./connection");
 
+// Create server
 const server = express();
 
+// ✅ Allow CORS for both localhost (development) and deployed frontend (Vercel)
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://maidapp-frontend-wmdu.vercel.app", // ✅ Ensure correct frontend URL
+  "http://localhost:5173", // Local development
+  "https://maidapp-frontend-s5lj.vercel.app", // Deployed frontend (Updated)
 ];
-
-// Debugging: Log incoming requests
-server.use((req, res, next) => {
-  console.log("Incoming request from:", req.headers.origin);
-  next();
-});
 
 server.use(
   cors({
@@ -23,37 +28,39 @@ server.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.error("❌ Blocked by CORS:", origin);
         callback(new Error("CORS policy does not allow this origin"), false);
       }
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    methods: "GET, POST, PUT, DELETE, OPTIONS",
+    allowedHeaders: "Content-Type, Authorization",
+    credentials: true, // ✅ Allow cookies if needed
   })
 );
 
-// ✅ Manually handle preflight requests
-server.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Allow-Credentials", "true");
-    return res.sendStatus(200);
-  }
-  next();
+// ✅ Handle preflight requests
+server.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
 });
 
+// ✅ Ensure Express understands JSON requests
 server.use(express.json());
+
+// Use the router for routes
 server.use(router);
 
+// Set port (fix for the PORT assignment)
 const PORT = process.env.PORT || 4000;
+
+// Listen
 server.listen(PORT, () => {
   console.log(`✅ Server is running successfully at PORT ${PORT}`);
 });
 
-// Test route
+// Test route to verify server is running
 server.get("/", (req, res) => {
   res.send("GET request received");
 });
