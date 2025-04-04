@@ -18,8 +18,8 @@ const server = express();
 
 // ✅ Allow CORS for both localhost (development) and deployed frontend (Vercel)
 const allowedOrigins = [
-  "http://localhost:5173", // Local development
-  "https://maidapp-frontend-s5lj.vercel.app", // Deployed frontend (Updated)
+  "http://localhost:5173", // Local dev
+  "https://maidapp-frontend-s5lj.vercel.app", // Deployed frontend
 ];
 
 server.use(
@@ -28,39 +28,30 @@ server.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("CORS policy does not allow this origin"), false);
+        console.log("Blocked CORS request from:", origin);
+        callback(new Error("CORS policy does not allow this origin"));
       }
     },
     methods: "GET, POST, PUT, DELETE, OPTIONS",
     allowedHeaders: "Content-Type, Authorization",
-    credentials: true, // ✅ Allow cookies if needed
+    credentials: true,
   })
 );
 
-// ✅ Handle preflight requests
-server.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(200);
-});
-
-// ✅ Ensure Express understands JSON requests
+// Parse incoming JSON
 server.use(express.json());
 
-// Use the router for routes
+// Use router
 server.use(router);
 
-// Set port (fix for the PORT assignment)
-const PORT = process.env.PORT || 4000;
-
-// Listen
-server.listen(PORT, () => {
-  console.log(`✅ Server is running successfully at PORT ${PORT}`);
-});
-
-// Test route to verify server is running
+// Test route
 server.get("/", (req, res) => {
   res.send("GET request received");
+});
+
+// Set port
+const PORT = process.env.PORT || 4000;
+
+server.listen(PORT, () => {
+  console.log(`✅ Server is running successfully at PORT ${PORT}`);
 });
